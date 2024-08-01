@@ -3,10 +3,17 @@
 # Ansible Automation Platform AAP version 2.4
 #
 # Installer for single node option (containerized)
-# usage: ./<this-script.sh> <tarball.tar.gz> <manifest.zip> [<post-install-repo-url>]
+#
+# usage: ./<this-script.sh> <tarball.tar.gz> <manifest.zip> [<post-install-repo-url> | false]
+#
 # Note that <post-install-repo-url> is only required if using Config-As-Code postinstall feature
+# If not provided, a default post-install-repo-url is used: 'https://github.com/ecigwegbu/aap-cac'
+# To disable this behaviour pass 'false' as the argument in its place instead
 #
 # Minimum system requirements: 6CPUs, 6 GB RAM, 40 GB storage, RHEL9.2+
+# For added security relace all demonstration passwords 'redhat' in this script with your own
+cd
+start_time=$(date +%s)
 
 # Check for at least 6 CPUs
 cpu_count=$(lscpu | awk '/^CPU\(s\):/ {print $2}')
@@ -25,7 +32,7 @@ if (( mem_total < 6 )); then
   exit 2  # Insufficient RAM
 fi
 
-# Check for at least 80GB storage in /
+# Check for at least 40GB storage in /
 storage_avail=$(df -BG / | awk 'NR==2 {print $4}' | sed 's/G//')
 echo "Storage: $storage_avail"
 if (( storage_avail < 40 )); then
@@ -64,13 +71,19 @@ TARBALL=$1
 AAP_MANIFEST=$2
 WORKDIR=${INI_DIR}/${TARBALL%.tar.gz}
 HOST=$(hostname -f)
-if [[ -n $3 ]]; then
+if [[ -n $3 ]] && [[ $3 != false ]]; then
+  # Argument is defined and not 'false'
   POSTINSTALL=true
   POSTINSTALL_REPO_URL=$3
-else
+elif [[ $3 == false ]]; then
+  # Argument is exactly 'false'
   POSTINSTALL=false
+  POSTINSTALL_REPO_URL=''
+else
+  # Argument is empty
+  POSTINSTALL=true
+  POSTINSTALL_REPO_URL='https://github.com/ecigwegbu/aap-cac'
 fi
-echo controller_postinstall_repo_url=\'${POSTINSTALL_REPO_URL}\'
 
 # register this server, if not already done
 sudo subscription-manager register --username ${RHSM_USER} --password ${RHSM_PASS} 2>/dev/null
@@ -129,3 +142,8 @@ EOF
 
 # Run the playbook
 ansible-playbook -i inventory ansible.containerized_installer.install
+
+# Timer
+end_time=$(date +%s)
+duration=$((end_time - start_time))
+echo Finished in "$((${duration}/60)) minutes, $((${duration}%60)) seconds"
