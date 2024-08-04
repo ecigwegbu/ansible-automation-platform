@@ -64,8 +64,8 @@ pg_username='awx'
 pg_password='redhat'
 
 registry_url='registry.redhat.io'
-registry_username='ecigwegbu'
-registry_password='yt76D2itE'
+registry_username="${RHSM_USER}"
+registry_password="${RHSM_PASS}"
 EOF
 
 # Run the installer script with priviledge escallation
