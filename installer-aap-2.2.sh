@@ -10,8 +10,8 @@ echo Create secrets file ~/.rhsm containing <redhat-username> <redhat-password>
 echo Exiting...
 exit 1  # Missing Red Hat credentials
 fi
-RHSM_USER=$(cut -f1 -d' ' ~/.rhsm)
-RHSM_PASS=$(cut -f2 -d' ' ~/.rhsm)
+export RHSM_USER=$(cut -f1 -d' ' ~/.rhsm)
+export RHSM_PASS=$(cut -f2 -d' ' ~/.rhsm)
 
 # register VM with Redhat
 sudo subscription-manager register --username ${RHSM_USER} --password ${RHSM_PASS}
@@ -64,8 +64,8 @@ pg_username='awx'
 pg_password='redhat'
 
 registry_url='registry.redhat.io'
-registry_username="${RHSM_USER}"
-registry_password="${RHSM_PASS}"
+registry_username="{{ lookup('env', 'RHSM_USER') }}"
+registry_password="{{ lookup('env', 'RHSM_PASS') }}"
 EOF
 
 # Run the installer script with priviledge escallation
